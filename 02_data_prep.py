@@ -25,8 +25,8 @@
 
 # COMMAND ----------
 
-theme = "chair"
-catalog = "sdxl_image_gen" # Name of the catalog we use to manage our assets (e.g. images, weights, datasets) 
+theme = "happy_meal"
+catalog = "bradley_munday" # Name of the catalog we use to manage our assets (e.g. images, weights, datasets) 
 volumes_dir = f"/Volumes/{catalog}/{theme}" # Path to the directories in UC Volumes
 
 # COMMAND ----------
@@ -40,26 +40,26 @@ _ = spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{theme}")
 import os
 import subprocess
 
-# Create volumes under the schma, and copy the training images into it 
-for volume in os.listdir("./images/chair"):
-  volume_name = f"{catalog}.{theme}.{volume}"
-  spark.sql(f"CREATE VOLUME IF NOT EXISTS {volume_name}")
-  command = f"cp ./images/chair/{volume}/*.jpg /Volumes/{catalog}/{theme}/{volume}/"
-  process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-  output, error = process.communicate()
-  if error:
-    print('Output: ', output)
-    print('Error: ', error)
+images_path = "../happy-meal-imgs/*"
+volume_name = f"{catalog}.{theme}.happy_meal"
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {volume_name}")
+command = f"cp {images_path} /Volumes/{catalog}/{theme}/happy_meal/"
+process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+output, error = process.communicate()
+if error:
+  print('Output: ', output)
+  print('Error: ', error)
+  raise Exception(error)
 
 # COMMAND ----------
 
 import glob
 
 # Display images in Volumes
-img_paths = f"{volumes_dir}/*/*.jpg"
+img_paths = f"{volumes_dir}/*/*"
 imgs = [PIL.Image.open(path) for path in glob.glob(img_paths)]
 num_imgs_to_preview = 25
-show_image_grid(imgs[:num_imgs_to_preview], 5, 5) # Custom function defined in util notebook
+show_image_grid(imgs[:num_imgs_to_preview], 4, 4) # Custom function defined in util notebook
 
 # COMMAND ----------
 
@@ -94,7 +94,7 @@ blip_model = BlipForConditionalGeneration.from_pretrained(
 # create a list of (Pil.Image, path) pairs
 imgs_and_paths = [
     (path, PIL.Image.open(path).rotate(-90))
-    for path in glob.glob(f"{volumes_dir}/*/*.jpg")
+    for path in glob.glob(f"{volumes_dir}/*/*")
 ]
 
 # COMMAND ----------
@@ -118,6 +118,23 @@ display(pd.DataFrame(captions).rename(columns={0: "caption"}))
 
 # COMMAND ----------
 
+captions_modified = [
+  "a photo of a happy meal with a bottle of milk, hamburger, and fries on a table in a McDonalds",
+  "a close up photo of happy meal box with a hamburger, bottle of water, and fries in front",
+  "a close up photot of a happy meal box with fries and a drink",
+  "a photo of two happy meal boxes with burgers and fries in front",
+  "a photo of two mcdonalds happy meals with burgers, fries, and juice boxes on a table",
+  "a photo of a happy meal with a blank blue background",
+  "a photo of a happy meal with a blank white background",
+  "a photo of a happy meal, burger, soda, and fries on a mcdonalds tray on a table",
+]
+
+# COMMAND ----------
+
+display(pd.DataFrame(captions_modified).rename(columns={0: "caption"}))
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC ## Manage Dataset in UC Volumes
 # MAGIC We create a Hugging Face Dataset object and store it in Unity Catalog Volume.
@@ -128,7 +145,7 @@ from datasets import Dataset, Image
 
 d = {
     "image": [imgs[0] for imgs in imgs_and_paths],
-    "caption": [caption for caption in captions],
+    "caption": [caption for caption in captions_modified],
 }
 dataset = Dataset.from_dict(d).cast_column("image", Image())
 spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalog}.{theme}.dataset")

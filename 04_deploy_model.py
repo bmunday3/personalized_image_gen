@@ -25,10 +25,10 @@ client = mlflow.tracking.MlflowClient()
 
 # COMMAND ----------
 
-theme = "chair"
-catalog = "sdxl_image_gen"
+theme = "happy_meal"
+catalog = "bradley_munday"
 log_schema = "log" # A schema within the catalog where the inferece log is going to be stored 
-model_name = f"{catalog}.model.sdxl-fine-tuned-{theme}"  # An existing model in model registry, may have multiple versions
+model_name = f"{catalog}.{theme}.sdxl-fine-tuned-{theme}"  # An existing model in model registry, may have multiple versions
 model_serving_endpoint_name = f"sdxl-fine-tuned-{theme}"
 
 # COMMAND ----------

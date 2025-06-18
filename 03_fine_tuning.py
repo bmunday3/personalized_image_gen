@@ -36,12 +36,16 @@ notebook.start("--logdir {} --reload_multifile True".format(logdir))
 
 # COMMAND ----------
 
-theme = "chair"
-catalog = "sdxl_image_gen"
-volumes_dir = "/Volumes/sdxl_image_gen"
+theme = "happy_meal"
+catalog = "bradley_munday"
+volumes_dir = "/Volumes/bradley_munday"
 os.environ["DATASET_NAME"] = f"{volumes_dir}/{theme}/dataset"
 os.environ["OUTPUT_DIR"] = f"{volumes_dir}/{theme}/adaptor"
 os.environ["LOGDIR"] = logdir
+
+# theme = "happy_meal"
+# catalog = "bradley_munday" # Name of the catalog we use to manage our assets (e.g. images, weights, datasets) 
+# volumes_dir = f"/Volumes/{catalog}/{theme}" # Path to the directories in UC Volumes
 
 # Make sure that the volume exists
 _ = spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalog}.{theme}.adaptor")
@@ -246,7 +250,7 @@ with mlflow.start_run() as run:
 _ = spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.model")
 
 # Register the model 
-registered_name = f"{catalog}.model.sdxl-fine-tuned-{theme}"
+registered_name = f"{catalog}.{theme}.sdxl-fine-tuned-{theme}"
 result = mlflow.register_model(
     "runs:/" + run.info.run_id + "/model",
     registered_name
@@ -282,7 +286,7 @@ import pandas as pd
 mlflow.set_registry_uri("databricks-uc")
 mlflow_client = MlflowClient()
 
-registered_name = f"{catalog}.model.sdxl-fine-tuned-{theme}"
+registered_name = f"{catalog}.{theme}.sdxl-fine-tuned-{theme}"
 model_version = get_latest_model_version(mlflow_client, registered_name)
 logged_model = f"models:/{registered_name}/{model_version}"
 
@@ -299,7 +303,7 @@ loaded_model = mlflow.pyfunc.load_model(logged_model)
 # Use any of the following token to generate personalized images: 'bcnchr', 'emslng', 'hsmnchr', 'rckchr', 'wdnchr'
 input_example = pd.DataFrame(
     {
-        "prompt": ["A photo of a long brown sofa in the style of the bcnchr chair"],
+        "prompt": ["A photo of a happy meal in Chicago on st patricks day"],
         "num_inference_steps": [25],
     }
 )
